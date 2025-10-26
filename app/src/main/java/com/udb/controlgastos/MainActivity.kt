@@ -10,6 +10,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.udb.controlgastos.data.Expense
+import com.udb.controlgastos.ui.screens.AddExpenseScreen
+import com.udb.controlgastos.ui.screens.EditExpenseScreen
 import com.udb.controlgastos.ui.screens.HomeScreen
 import com.udb.controlgastos.ui.screens.LoginScreen
 import com.udb.controlgastos.ui.theme.ControlGastosTheme
@@ -34,27 +37,52 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun ControlGastosApp(viewModel: AuthViewModel = viewModel()) {
-    var isAuthenticated by remember { mutableStateOf(false) }
+    var currentScreen by remember { mutableStateOf<Screen>(Screen.Login) }
     val currentUser by viewModel.currentUser.collectAsState()
 
-    // Estado de autenticación
+    // Actualizar pantalla basado en el usuario actual
     LaunchedEffect(currentUser) {
-        isAuthenticated = currentUser != null
+        if (currentUser != null && currentScreen == Screen.Login) {
+            currentScreen = Screen.Home
+        } else if (currentUser == null && currentScreen != Screen.Login) {
+            currentScreen = Screen.Login
+        }
     }
 
-    if (isAuthenticated) {
-        HomeScreen(
-            onSignOut = {
-                isAuthenticated = false
-            },
-            viewModel = viewModel
-        )
-    } else {
-        LoginScreen(
-            onNavigateToHome = {
-                isAuthenticated = true
-            },
-            viewModel = viewModel
-        )
+    when (currentScreen) {
+        Screen.Login -> {
+            LoginScreen(
+                onNavigateToHome = { currentScreen = Screen.Home },
+                viewModel = viewModel
+            )
+        }
+        Screen.Home -> {
+            HomeScreen(
+                onSignOut = { currentScreen = Screen.Login },
+                onNavigateToAddExpense = { currentScreen = Screen.AddExpense },
+                onNavigateToEditExpense = { expense ->
+                    currentScreen = Screen.EditExpense(expense)
+                },
+                authViewModel = viewModel
+            )
+        }
+        Screen.AddExpense -> {
+            AddExpenseScreen(
+                onNavigateBack = { currentScreen = Screen.Home }
+            )
+        }
+        is Screen.EditExpense -> {
+            EditExpenseScreen(
+                expense = (currentScreen as Screen.EditExpense).expense,
+                onNavigateBack = { currentScreen = Screen.Home }
+            )
+        }
     }
+}
+
+sealed class Screen {
+    object Login : Screen()
+    object Home : Screen()
+    object AddExpense : Screen()
+    data class EditExpense(val expense: Expense) : Screen()
 }
