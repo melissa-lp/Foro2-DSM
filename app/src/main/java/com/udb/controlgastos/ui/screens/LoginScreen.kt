@@ -1,5 +1,8 @@
 package com.udb.controlgastos.ui.screens
 
+import android.app.Activity.RESULT_OK
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -11,6 +14,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -18,6 +22,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.udb.controlgastos.data.GoogleSignInHelper
 import com.udb.controlgastos.viewmodel.AuthState
 import com.udb.controlgastos.viewmodel.AuthViewModel
 
@@ -26,6 +32,9 @@ fun LoginScreen(
     onNavigateToHome: () -> Unit,
     viewModel: AuthViewModel = viewModel()
 ) {
+    val context = LocalContext.current
+    val googleSignInHelper = remember { GoogleSignInHelper(context) }
+
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
@@ -34,6 +43,19 @@ fun LoginScreen(
     val authState by viewModel.authState.collectAsState()
     val currentUser by viewModel.currentUser.collectAsState()
 
+    // Launcher para Google Sign-In
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+            val idToken = googleSignInHelper.handleSignInResult(task)
+            if (idToken != null) {
+                viewModel.signInWithGoogle(idToken)
+            }
+        }
+    }
+
     // Navegar a Home si el usuario ya está autenticado
     LaunchedEffect(currentUser) {
         if (currentUser != null) {
@@ -41,7 +63,7 @@ fun LoginScreen(
         }
     }
 
-    // Manejar estado de autenticación exitosa
+    // Estado de autenticación exitosa
     LaunchedEffect(authState) {
         if (authState is AuthState.Success) {
             onNavigateToHome()
@@ -74,7 +96,7 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Campo de Email
+        // Email
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
@@ -89,7 +111,7 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Campo de Contraseña
+        // Contraseña
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
@@ -113,7 +135,7 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Botón de Iniciar Sesión / Registrarse
+        // Iniciar Sesión / Registrarse
         Button(
             onClick = {
                 if (isLoginMode) {
@@ -142,7 +164,7 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Botón para cambiar entre Login y Registro
+        // Cambiar entre Login y Registro
         TextButton(
             onClick = {
                 isLoginMode = !isLoginMode
@@ -173,19 +195,20 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Botón de Google Sign-In (placeholder por ahora)
+        // Botón de Google Sign-In
         OutlinedButton(
             onClick = {
-                // Implementaremos Google Sign-In después
+                launcher.launch(googleSignInHelper.getSignInIntent())
             },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(50.dp)
+                .height(50.dp),
+            enabled = authState !is AuthState.Loading
         ) {
             Text("Continuar con Google")
         }
 
-        // Mostrar errores
+        // Errores
         if (authState is AuthState.Error) {
             Spacer(modifier = Modifier.height(16.dp))
             Text(

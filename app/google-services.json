@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "719114248175-bl37vt9lao7e4jatch6q52dk87p5jrhf.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.udb.controlgastos",
+            "certificate_hash": "a88b78adc89d6ca5ffa1325e531809ead629fafb"
+          }
+        },
+        {
           "client_id": "719114248175-0tqrhk5l14nmn6cns6fvneie98hr5dog.apps.googleusercontent.com",
           "client_type": 3
         }

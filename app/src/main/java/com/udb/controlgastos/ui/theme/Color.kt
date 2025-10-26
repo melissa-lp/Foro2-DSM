@@ -2,10 +2,29 @@ package com.udb.controlgastos.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
+// Colores personalizados de la app
+val DarkGreen = Color(0xFF283D3B)      // Color principal oscuro
+val Teal = Color(0xFF197278)           // Color secundario/acento
+val Cream = Color(0xF9F4F1)          // Color de fondo claro
+val RedAccent = Color(0xFFC44536)      // Color de acento rojo
+val DarkRed = Color(0xFF772E25)        // Color de acento rojo oscuro
 
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+// Colores para modo claro
+val Primary = Teal
+val OnPrimary = Color.White
+val Secondary = RedAccent
+val OnSecondary = Color.White
+val Background = Cream
+val Surface = Color.White
+val OnSurface = DarkGreen
+val Error = RedAccent
+
+// Colores para modo oscuro
+val PrimaryDark = DarkGreen
+val OnPrimaryDark = Cream
+val SecondaryDark = RedAccent
+val OnSecondaryDark = Color.White
+val BackgroundDark = Color(0xFF1A1A1A)
+val SurfaceDark = Color(0xFF2A2A2A)
+val OnSurfaceDark = Cream
+val ErrorDark = RedAccent
