@@ -63,4 +63,10 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+    // ViewModel
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
+    // Material Icons Extended
+    implementation("androidx.compose.material:material-icons-extended:1.7.5")
+    // Firebase BoM
+    implementation(platform("com.google.firebase:firebase-bom:34.4.0"))
 }
