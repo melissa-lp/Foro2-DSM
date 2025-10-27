@@ -2,6 +2,15 @@
 
 Aplicación móvil para Android desarrollada con Kotlin y Jetpack Compose que permite a los usuarios gestionar sus gastos personales de manera eficiente, con autenticación segura mediante Firebase y almacenamiento en tiempo real con Cloud Firestore.
 - Enlace a video de Youtube: https://youtu.be/YvRyf_1QO8g
+
+# 👥 Integrantes
+- Emilia Eunice Meléndez Barreiro, MB211545
+- César Enrique Regalado Villalta, RV210723
+- Denis Josué Vásquez Rodríguez, VR222731
+- Victor Amilcar Elías Peña, EP171613
+- Jairo Dennis Ramos Jiménez, RJ172021
+- Melissa Vanina López Peña, LP223029
+
 ## 📱 Características Principales
 
 - ✅ **Autenticación Segura**
