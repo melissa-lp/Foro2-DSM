@@ -4,10 +4,13 @@ import androidx.compose.ui.graphics.Color
 
 // Colores personalizados de la app
 val DarkGreen = Color(0xFF283D3B)      // Color principal oscuro
-val Teal = Color(0xFF197278)           // Color secundario/acento
+val Teal = Color(0xFF13315C)           // Color secundario/acento
 val Cream = Color(0xF9F4F1)          // Color de fondo claro
-val RedAccent = Color(0xFFC44536)      // Color de acento rojo
+val RedAccent = Color(0xFF780000)      // Color de acento rojo
 val DarkRed = Color(0xFF772E25)        // Color de acento rojo oscuro
+val lightBlue = Color(0xFFBCCDDC)
+val Blue = Color(0xFF0B2545)
+val Gray = Color(0xFFE9ECEF)
 
 // Colores para modo claro
 val Primary = Teal
@@ -18,6 +21,10 @@ val Background = Cream
 val Surface = Color.White
 val OnSurface = DarkGreen
 val Error = RedAccent
+val PrimaryContainer = lightBlue
+val OnPrimaryContainer = Blue
+
+val Card = Gray
 
 // Colores para modo oscuro
 val PrimaryDark = DarkGreen

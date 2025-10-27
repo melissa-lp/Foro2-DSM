@@ -28,7 +28,7 @@ class ExpenseRepository {
         }
     }
 
-    // Gastos del usuario actual
+    // Gastos
     fun getUserExpenses(): Flow<List<Expense>> = callbackFlow {
         val userId = getCurrentUserId()
         if (userId == null) {
@@ -38,7 +38,6 @@ class ExpenseRepository {
 
         val listener = getExpensesCollection()
             .whereEqualTo("userId", userId)
-            .orderBy("date", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     close(error)
@@ -47,7 +46,7 @@ class ExpenseRepository {
 
                 val expenses = snapshot?.documents?.mapNotNull { doc ->
                     doc.toObject(Expense::class.java)?.copy(id = doc.id)
-                } ?: emptyList()
+                }?.sortedByDescending { it.date.toDate() } ?: emptyList()
 
                 trySend(expenses)
             }
@@ -81,28 +80,26 @@ class ExpenseRepository {
         }
     }
 
-    // Obtener total de gastos del mes actual
+    // gastos del mes actual
     suspend fun getMonthlyTotal(year: Int, month: Int): Double {
         return try {
             val userId = getCurrentUserId() ?: return 0.0
 
-            val calendar = java.util.Calendar.getInstance()
-            calendar.set(year, month - 1, 1, 0, 0, 0)
-            val startOfMonth = com.google.firebase.Timestamp(calendar.time)
-
-            calendar.set(year, month - 1, calendar.getActualMaximum(java.util.Calendar.DAY_OF_MONTH), 23, 59, 59)
-            val endOfMonth = com.google.firebase.Timestamp(calendar.time)
-
             val snapshot = getExpensesCollection()
                 .whereEqualTo("userId", userId)
-                .whereGreaterThanOrEqualTo("date", startOfMonth)
-                .whereLessThanOrEqualTo("date", endOfMonth)
                 .get()
                 .await()
 
+            val calendar = java.util.Calendar.getInstance()
             snapshot.documents.mapNotNull {
-                it.toObject(Expense::class.java)?.amount
-            }.sum()
+                it.toObject(Expense::class.java)
+            }.filter { expense ->
+                calendar.time = expense.date.toDate()
+                val expenseMonth = calendar.get(java.util.Calendar.MONTH) + 1
+                val expenseYear = calendar.get(java.util.Calendar.YEAR)
+                expenseMonth == month && expenseYear == year
+            }.sumOf { it.amount }
+
         } catch (e: Exception) {
             0.0
         }

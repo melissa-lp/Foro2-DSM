@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.udb.controlgastos.data.Expense
+import com.udb.controlgastos.ui.components.FilterBar
 import com.udb.controlgastos.viewmodel.AuthViewModel
 import com.udb.controlgastos.viewmodel.ExpenseViewModel
 import java.text.NumberFormat
@@ -38,8 +39,35 @@ fun HomeScreen(
     var showDeleteDialog by remember { mutableStateOf(false) }
     var expenseToDelete by remember { mutableStateOf<Expense?>(null) }
 
+    // Estados de filtros
+    val calendar = Calendar.getInstance()
+    var selectedCategory by remember { mutableStateOf("Todas") }
+    var selectedMonth by remember { mutableStateOf(calendar.get(Calendar.MONTH) + 1) }
+    var selectedYear by remember { mutableStateOf(calendar.get(Calendar.YEAR)) }
+
     val numberFormat = NumberFormat.getCurrencyInstance(Locale.US)
     val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+
+    // Filtrar gastos
+    val filteredExpenses = remember(expenses, selectedCategory, selectedMonth, selectedYear) {
+        expenses.filter { expense ->
+            val expenseCalendar = Calendar.getInstance().apply {
+                time = expense.date.toDate()
+            }
+            val expenseMonth = expenseCalendar.get(Calendar.MONTH) + 1
+            val expenseYear = expenseCalendar.get(Calendar.YEAR)
+
+            val matchesCategory = selectedCategory == "Todas" || expense.category == selectedCategory
+            val matchesMonth = expenseMonth == selectedMonth && expenseYear == selectedYear
+
+            matchesCategory && matchesMonth
+        }
+    }
+
+    // Calcular total filtrado
+    val filteredTotal = remember(filteredExpenses) {
+        filteredExpenses.sumOf { it.amount }
+    }
 
     Scaffold(
         topBar = {
@@ -86,7 +114,8 @@ fun HomeScreen(
                     Text(
                         text = "¡Bienvenido!",
                         fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.9f)
                     )
 
                     Spacer(modifier = Modifier.height(4.dp))
@@ -94,7 +123,7 @@ fun HomeScreen(
                     Text(
                         text = currentUser?.email ?: "Usuario",
                         fontSize = 14.sp,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.9f)
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -106,23 +135,64 @@ fun HomeScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    Text(
-                        text = "Total del mes",
-                        fontSize = 14.sp,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column {
+                            Text(
+                                text = "Total del mes",
+                                fontSize = 14.sp,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                            )
+                            Text(
+                                text = numberFormat.format(monthlyTotal),
+                                fontSize = 28.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
 
-                    Text(
-                        text = numberFormat.format(monthlyTotal),
-                        fontSize = 32.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
+                        if (selectedCategory != "Todas" ||
+                            selectedMonth != calendar.get(Calendar.MONTH) + 1 ||
+                            selectedYear != calendar.get(Calendar.YEAR)) {
+                            Column(horizontalAlignment = Alignment.End) {
+                                Text(
+                                    text = "Total filtrado",
+                                    fontSize = 14.sp,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                                )
+                                Text(
+                                    text = numberFormat.format(filteredTotal),
+                                    fontSize = 24.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.secondary
+                                )
+                            }
+                        }
+                    }
                 }
             }
 
+            // Barra de filtros
+            FilterBar(
+                selectedCategory = selectedCategory,
+                selectedMonth = selectedMonth,
+                selectedYear = selectedYear,
+                onCategoryChange = { selectedCategory = it },
+                onMonthYearChange = { month, year ->
+                    selectedMonth = month
+                    selectedYear = year
+                },
+                onClearFilters = {
+                    selectedCategory = "Todas"
+                    selectedMonth = calendar.get(Calendar.MONTH) + 1
+                    selectedYear = calendar.get(Calendar.YEAR)
+                }
+            )
+
             // Lista de gastos
-            if (expenses.isEmpty()) {
+            if (filteredExpenses.isEmpty()) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -130,14 +200,18 @@ fun HomeScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "No hay gastos registrados.\nPresiona + para agregar uno.",
+                        text = if (expenses.isEmpty()) {
+                            "No hay gastos registrados.\nPresiona + para agregar uno."
+                        } else {
+                            "No hay gastos con estos filtros."
+                        },
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                     )
                 }
             } else {
                 Text(
-                    text = "Historial de gastos",
+                    text = "Historial de gastos (${filteredExpenses.size})",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
@@ -148,7 +222,7 @@ fun HomeScreen(
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(expenses) { expense ->
+                    items(filteredExpenses) { expense ->
                         ExpenseItem(
                             expense = expense,
                             onEdit = {
@@ -202,6 +276,9 @@ fun ExpenseItem(
     dateFormat: SimpleDateFormat
 ) {
     Card(
+        colors = CardDefaults.cardColors(
+            containerColor = com.udb.controlgastos.ui.theme.Card
+        ),
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
